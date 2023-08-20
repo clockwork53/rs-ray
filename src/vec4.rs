@@ -3,14 +3,14 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 pub const EPSILON: f32 = 0.00001;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Tuple {
+pub struct Vec4 {
 	pub x: f32,
 	pub y: f32,
 	pub z: f32,
 	pub w: f32,
 }
 
-impl Add for Tuple {
+impl Add for Vec4 {
 	type Output = Self;
 	fn add(self, rhs: Self) -> Self::Output {
 		if self.w == 1f32 && rhs.w == 1f32 {
@@ -20,7 +20,7 @@ impl Add for Tuple {
 	}
 }
 
-impl Sub for Tuple {
+impl Sub for Vec4 {
 	type Output = Self;
 	fn sub(self, rhs: Self) -> Self::Output {
 		if self.w == 0f32 && rhs.w == 1f32 {
@@ -30,7 +30,7 @@ impl Sub for Tuple {
 	}
 }
 
-impl Neg for Tuple {
+impl Neg for Vec4 {
 	type Output = Self;
 	fn neg(self) -> Self::Output {
 		if self.w == 1f32 {
@@ -40,14 +40,14 @@ impl Neg for Tuple {
 	}
 }
 
-impl Mul<f32> for Tuple {
+impl Mul<f32> for Vec4 {
 	type Output = Self;
 	fn mul(self, rhs: f32) -> Self::Output {
 		Self { x: self.x * rhs, y: self.y * rhs, z: self.z * rhs, w: self.w * rhs }
 	}
 }
 
-impl Div<f32> for Tuple {
+impl Div<f32> for Vec4 {
 	type Output = Self;
 	fn div(self, rhs: f32) -> Self::Output {
 		if rhs == 0f32 {
@@ -57,7 +57,7 @@ impl Div<f32> for Tuple {
 	}
 }
 
-impl PartialEq for Tuple {
+impl PartialEq for Vec4 {
 	fn eq(&self, other: &Self) -> bool {
 		f32::abs(self.x - other.x) < EPSILON &&
 			f32::abs(self.y - other.y) < EPSILON &&
@@ -66,7 +66,7 @@ impl PartialEq for Tuple {
 	}
 }
 
-impl Tuple {
+impl Vec4 {
 	pub fn magnitude(self) -> f32 {
 		let x2 = self.x * self.x;
 		let y2 = self.y * self.y;
@@ -75,19 +75,19 @@ impl Tuple {
 		(x2 + y2 + z2 + w2).sqrt()
 	}
 
-	pub fn normalize(self) -> Tuple {
+	pub fn normalize(self) -> Vec4 {
 		let magnitude = self.magnitude();
-		Tuple { x: self.x / magnitude, y: self.y / magnitude, z: self.z / magnitude, w: self.w / magnitude }
+		Vec4 { x: self.x / magnitude, y: self.y / magnitude, z: self.z / magnitude, w: self.w / magnitude }
 	}
 
-	pub fn dot(self, other: Tuple) -> f32 {
+	pub fn dot(self, other: Vec4) -> f32 {
 		(self.x * other.x) +
 			(self.y * other.y) +
 			(self.z * other.z) +
 			(self.w * other.w)
 	}
 
-	pub fn cross(self, other: Tuple) -> Tuple {
+	pub fn cross(self, other: Vec4) -> Vec4 {
 		if self.w != 0f32 || other.w != 0f32 {
 			panic!("Illegal Operation: Cross product involving a point!");
 		}
@@ -99,12 +99,12 @@ impl Tuple {
 	}
 }
 
-pub fn point(x: f32, y: f32, z: f32) -> Tuple {
-	Tuple { x, y, z, w: 1f32 }
+pub fn point(x: f32, y: f32, z: f32) -> Vec4 {
+	Vec4 { x, y, z, w: 1f32 }
 }
 
-pub fn vector(x: f32, y: f32, z: f32) -> Tuple {
-	Tuple { x, y, z, w: 0f32 }
+pub fn vector(x: f32, y: f32, z: f32) -> Vec4 {
+	Vec4 { x, y, z, w: 0f32 }
 }
 
 
@@ -114,155 +114,155 @@ mod tests {
 
 	#[test]
 	fn test_tuple_point() {
-		let a = Tuple { x: 4.3, y: -4.2, z: 3.1, w: 1f32 };
+		let a = Vec4 { x: 4.3, y: -4.2, z: 3.1, w: 1. };
 		assert_eq!(a.x, 4.3);
 		assert_eq!(a.y, -4.2);
 		assert_eq!(a.z, 3.1);
-		assert_eq!(a.w, 1f32);
-		assert_ne!(a.w, 0f32);
+		assert_eq!(a.w, 1.);
+		assert_ne!(a.w, 0.);
 	}
 
 	#[test]
 	fn test_tuple_vector() {
-		let a = Tuple { x: 4.3, y: -4.2, z: 3.1, w: 0f32 };
+		let a = Vec4 { x: 4.3, y: -4.2, z: 3.1, w: 0. };
 		assert_eq!(a.x, 4.3);
 		assert_eq!(a.y, -4.2);
 		assert_eq!(a.z, 3.1);
-		assert_eq!(a.w, 0f32);
-		assert_ne!(a.w, 1f32);
+		assert_eq!(a.w, 0.);
+		assert_ne!(a.w, 1.);
 	}
 
 	#[test]
 	fn test_new_point() {
-		let p = point(4f32, -4f32, 3f32);
-		assert_eq!(p, Tuple { x: 4f32, y: -4f32, z: 3f32, w: 1f32 })
+		let p = point(4., -4., 3.);
+		assert_eq!(p, Vec4 { x: 4., y: -4., z: 3., w: 1. })
 	}
 
 	#[test]
 	fn test_new_vector() {
-		let v = vector(4f32, -4f32, 3f32);
-		assert_eq!(v, Tuple { x: 4f32, y: -4f32, z: 3f32, w: 0f32 })
+		let v = vector(4., -4., 3.);
+		assert_eq!(v, Vec4 { x: 4., y: -4., z: 3., w: 0. })
 	}
 
 	#[test]
 	fn test_adding_tuples() {
-		let a1 = Tuple { x: 3f32, y: -2f32, z: 1f32, w: 1f32 };
-		let a2 = Tuple { x: -2f32, y: 3f32, z: 1f32, w: 0f32 };
-		assert_eq!(a1 + a2, Tuple { x: 1f32, y: 1f32, z: 2f32, w: 1f32 })
+		let a1 = Vec4 { x: 3., y: -2., z: 1., w: 1. };
+		let a2 = Vec4 { x: -2., y: 3., z: 1., w: 0. };
+		assert_eq!(a1 + a2, Vec4 { x: 1., y: 1., z: 2., w: 1. })
 	}
 
 	#[test]
 	fn test_subtracting_two_points() {
-		let p1 = Tuple { x: 3f32, y: 2f32, z: 1f32, w: 1f32 };
-		let p2 = Tuple { x: 5f32, y: 6f32, z: 7f32, w: 1f32 };
-		assert_eq!(p1 - p2, Tuple { x: -2f32, y: -4f32, z: -6f32, w: 0f32 })
+		let p1 = Vec4 { x: 3., y: 2., z: 1., w: 1. };
+		let p2 = Vec4 { x: 5., y: 6., z: 7., w: 1. };
+		assert_eq!(p1 - p2, Vec4 { x: -2., y: -4., z: -6., w: 0. })
 	}
 
 	#[test]
 	fn test_subtracting_a_vector_from_a_point() {
-		let p = Tuple { x: 3f32, y: 2f32, z: 1f32, w: 1f32 };
-		let v = Tuple { x: 5f32, y: 6f32, z: 7f32, w: 0f32 };
-		assert_eq!(p - v, Tuple { x: -2f32, y: -4f32, z: -6f32, w: 1f32 })
+		let p = Vec4 { x: 3., y: 2., z: 1., w: 1. };
+		let v = Vec4 { x: 5., y: 6., z: 7., w: 0. };
+		assert_eq!(p - v, Vec4 { x: -2., y: -4., z: -6., w: 1. })
 	}
 
 	#[test]
 	fn test_subtracting_two_vectors() {
-		let v1 = Tuple { x: 3f32, y: 2f32, z: 1f32, w: 0f32 };
-		let v2 = Tuple { x: 5f32, y: 6f32, z: 7f32, w: 0f32 };
-		assert_eq!(v1 - v2, Tuple { x: -2f32, y: -4f32, z: -6f32, w: 0f32 })
+		let v1 = Vec4 { x: 3., y: 2., z: 1., w: 0. };
+		let v2 = Vec4 { x: 5., y: 6., z: 7., w: 0. };
+		assert_eq!(v1 - v2, Vec4 { x: -2., y: -4., z: -6., w: 0. })
 	}
 
 	#[test]
 	fn test_subtracting_a_vector_from_the_zero_vector() {
-		let zero = vector(0f32, 0f32, 0f32);
-		let v = vector(1f32, -2f32, 3f32);
-		assert_eq!(zero - v, vector(-1f32, 2f32, -3f32))
+		let zero = vector(0., 0., 0.);
+		let v = vector(1., -2., 3.);
+		assert_eq!(zero - v, vector(-1., 2., -3.))
 	}
 
 	#[test]
 	fn test_negating_a_tuple() {
-		let a = Tuple { x: 1f32, y: -2f32, z: 3f32, w: -4f32 };
-		assert_eq!(-a, Tuple { x: -1f32, y: 2f32, z: -3f32, w: 4f32 })
+		let a = Vec4 { x: 1., y: -2., z: 3., w: -4. };
+		assert_eq!(-a, Vec4 { x: -1., y: 2., z: -3., w: 4. })
 	}
 
 	#[test]
 	fn test_multiplying_a_tuple_by_a_scalar() {
-		let a = Tuple { x: 1f32, y: -2f32, z: 3f32, w: -4f32 };
-		assert_eq!(a * 3.5f32, Tuple { x: 3.5f32, y: -7f32, z: 10.5f32, w: -14f32 })
+		let a = Vec4 { x: 1., y: -2., z: 3., w: -4. };
+		assert_eq!(a * 3.5, Vec4 { x: 3.5, y: -7., z: 10.5, w: -14. })
 	}
 
 	#[test]
 	fn test_multiplying_a_tuple_by_a_fraction() {
-		let a = Tuple { x: 1f32, y: -2f32, z: 3f32, w: -4f32 };
-		assert_eq!(a * 0.5f32, Tuple { x: 0.5f32, y: -1f32, z: 1.5f32, w: -2f32 })
+		let a = Vec4 { x: 1., y: -2., z: 3., w: -4. };
+		assert_eq!(a * 0.5, Vec4 { x: 0.5, y: -1., z: 1.5, w: -2. })
 	}
 
 	#[test]
 	fn test_dividing_a_tuple_by_a_scalar() {
-		let a = Tuple { x: 1f32, y: -2f32, z: 3f32, w: -4f32 };
-		assert_eq!(a / 2f32, Tuple { x: 0.5f32, y: -1f32, z: 1.5f32, w: -2f32 })
+		let a = Vec4 { x: 1., y: -2., z: 3., w: -4. };
+		assert_eq!(a / 2., Vec4 { x: 0.5, y: -1., z: 1.5, w: -2. })
 	}
 
 	#[test]
 	fn test_magnitude_of_vector_1_0_0() {
-		let v = vector(1f32, 0f32, 0f32);
-		assert_eq!(v.magnitude(), 1f32)
+		let v = vector(1., 0., 0.);
+		assert_eq!(v.magnitude(), 1.)
 	}
 
 	#[test]
 	fn test_magnitude_of_vector_0_1_0() {
-		let v = vector(0f32, 1f32, 0f32);
-		assert_eq!(v.magnitude(), 1f32)
+		let v = vector(0., 1., 0.);
+		assert_eq!(v.magnitude(), 1.)
 	}
 
 	#[test]
 	fn test_magnitude_of_vector_0_0_1() {
-		let v = vector(0f32, 0f32, 1f32);
-		assert_eq!(v.magnitude(), 1f32)
+		let v = vector(0., 0., 1.);
+		assert_eq!(v.magnitude(), 1.)
 	}
 
 	#[test]
 	fn test_magnitude_of_vector_1_2_3() {
-		let v = vector(1f32, 2f32, 3f32);
+		let v = vector(1., 2., 3.);
 		assert_eq!(v.magnitude(), 14f32.sqrt())
 	}
 
 	#[test]
 	fn test_magnitude_of_vector_n1_n2_n3() {
-		let v = vector(-1f32, -2f32, -3f32);
+		let v = vector(-1., -2., -3.);
 		assert_eq!(v.magnitude(), 14f32.sqrt())
 	}
 
 	#[test]
 	fn test_normalizing_vector_4_0_0() {
-		let v = vector(4f32, 0f32, 0f32);
-		assert_eq!(v.normalize(), vector(1f32, 0f32, 0f32))
+		let v = vector(4., 0., 0.);
+		assert_eq!(v.normalize(), vector(1., 0., 0.))
 	}
 
 	#[test]
 	fn test_normalizing_vector_1_2_3() {
-		let v = vector(1f32, 2f32, 3f32);
+		let v = vector(1., 2., 3.);
 		assert_eq!(v.normalize(), vector(0.26726, 0.53452, 0.80178))
 	}
 
 	#[test]
 	fn test_magnitude_of_normalized_vector_1_2_3() {
-		let v = vector(1f32, 2f32, 3f32);
-		assert!((v.normalize().magnitude() - 1f32).abs() < EPSILON)
+		let v = vector(1., 2., 3.);
+		assert!((v.normalize().magnitude() - 1.).abs() < EPSILON)
 	}
 
 	#[test]
 	fn test_dot_product_of_two_tuples() {
-		let a = vector(1f32, 2f32, 3f32);
-		let b = vector(2f32, 3f32, 4f32);
-		assert_eq!(a.dot(b), 20f32)
+		let a = vector(1., 2., 3.);
+		let b = vector(2., 3., 4.);
+		assert_eq!(a.dot(b), 20.)
 	}
 
 	#[test]
 	fn test_cross_product_of_two_tuples() {
-		let a = vector(1f32, 2f32, 3f32);
-		let b = vector(2f32, 3f32, 4f32);
-		assert_eq!(a.cross(b), vector(-1f32, 2f32, -1f32));
-		assert_eq!(b.cross(a), vector(1f32, -2f32, 1f32));
+		let a = vector(1., 2., 3.);
+		let b = vector(2., 3., 4.);
+		assert_eq!(a.cross(b), vector(-1., 2., -1.));
+		assert_eq!(b.cross(a), vector(1., -2., 1.));
 	}
 }

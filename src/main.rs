@@ -1,17 +1,20 @@
-use crate::tuples::{EPSILON, point, vector};
-use self::tuples::Tuple;
+use crate::vec4::{EPSILON, point, vector};
+use crate::vec3::{color};
+use self::vec4::Vec4;
+use self::vec3::Vec3;
 
-mod tuples;
+mod vec4;
+mod vec3;
 
 #[derive(Debug)]
 struct Projectile {
-	position: Tuple,
-	velocity: Tuple,
+	position: Vec4,
+	velocity: Vec4,
 }
 
 struct Environment {
-	gravity: Tuple,
-	wind: Tuple,
+	gravity: Vec4,
+	wind: Vec4,
 }
 
 fn tick(env: &Environment, proj: &Projectile) -> Projectile {
@@ -26,7 +29,7 @@ fn main() {
 	while &p.position.y - 0f32 > EPSILON {
 		ticks += 1;
 		p = tick(&e, &p);
-		dbg!(&p);
 	}
+	dbg!(&p);
 	dbg!(ticks);
 }

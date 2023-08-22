@@ -6,6 +6,7 @@ use self::vec4::Vec4;
 mod vec4;
 mod vec3;
 mod canvas;
+mod matrix;
 
 #[derive(Debug)]
 struct Projectile {

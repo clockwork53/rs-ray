@@ -1,6 +1,3 @@
-// #![allow(incomplete_features)]
-// #![feature(generic_const_exprs, adt_const_params, const_generics, const_evaluatable_checked)]
-
 use std::fmt::Debug;
 use std::ops::{Add, Mul, Div, Neg, Sub};
 use crate::tuple::Tuple;
@@ -36,13 +33,13 @@ pub const IDENTITY_MATRIX: Matrix<u8, 4> = Matrix
 };
 
 // 4x4 * 4x4
-impl<T, F> Mul<Matrix<F, 4>> for Matrix<T, 4>
+impl<T, F> Mul<&Matrix<F, 4>> for Matrix<T, 4>
 	where T: Default + Copy + Add<Output=T> + Mul<Output=T>,
 	      F: Default + Copy + TryInto<T>,
 	      <F as TryInto<T>>::Error: Debug
 {
 	type Output = Self;
-	fn mul(self, rhs: Matrix<F, 4>) -> Self::Output {
+	fn mul(self, rhs: &Matrix<F, 4>) -> Self::Output {
 		let mut res = Matrix::new(None);
 		for row in 0..4 {
 			for col in 0..4 {
@@ -318,7 +315,7 @@ mod tests {
 			[40, 58, 110, 102],
 			[16, 26, 46, 42]
 		];
-		assert_eq!((matrix4x4_filled_a * matrix4x4_filled_b).data, fill_array_c)
+		assert_eq!((matrix4x4_filled_a * &matrix4x4_filled_b).data, fill_array_c)
 	}
 
 	#[test]
@@ -354,8 +351,8 @@ mod tests {
 		];
 		let matrix4x4_filled_a = Matrix::new(Some(MatrixFill::Array(fill_array_a)));
 		let matrix4x4_filled_c = Matrix::new(Some(MatrixFill::Array(fill_array_c)));
-		assert_eq!((matrix4x4_filled_a * IDENTITY_MATRIX).data, fill_array_a);
-		assert_eq!((matrix4x4_filled_c * IDENTITY_MATRIX).data, fill_array_c);
+		assert_eq!((matrix4x4_filled_a * &IDENTITY_MATRIX).data, fill_array_a);
+		assert_eq!((matrix4x4_filled_c * &IDENTITY_MATRIX).data, fill_array_c);
 
 		let fill_array_b: [i64; 4] = [1, 2, 3, 1];
 		let tuple4x1_filled_b = Tuple::new(Some(TupleFill::Array(fill_array_b)));
@@ -635,18 +632,18 @@ mod tests {
 	#[test]
 	fn test_inverse_matrix_4x4_d() {
 		let matrix_a = Matrix::new(Some(MatrixFill::Array([
-			[3, -9, 7, 3],
-			[3, -8, 2, -9],
-			[-4, 4, 4, 1],
-			[-6, 5, -1, 1]
+			[3., -9., 7., 3.],
+			[3., -8., 2., -9.],
+			[-4., 4., 4., 1.],
+			[-6., 5., -1., 1.]
 		])));
 		let matrix_b = Matrix::new(Some(MatrixFill::Array([
-			[8, 2, 2, 2],
-			[3, -1, 7, 0],
-			[7, 0, 5, 4],
-			[6, -2, 0, 5]
+			[8., 2., 2., 2.],
+			[3., -1., 7., 0.],
+			[7., 0., 5., 4.],
+			[6., -2., 0., 5.]
 		])));
-		let matrix_c = matrix_a * matrix_b;
+		let matrix_c = matrix_a * &matrix_b;
 		assert_eq!(matrix_c * matrix_b.inverse().unwrap(), matrix_a);
 	}
 }

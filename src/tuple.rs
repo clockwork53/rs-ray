@@ -78,6 +78,9 @@ mod tests {
 
 		let matrix4x1_filled = Tuple::new(Some(TupleFill::Array(fill_array)));
 		assert_eq!(matrix4x1_filled.data, fill_array);
+
+		let matrix4x1_filled = Tuple::new(Some(TupleFill::Single(1.)));
+		assert_eq!(matrix4x1_filled.data, [1., 1., 1., 1.]);
 	}
 
 	#[test]

@@ -21,12 +21,23 @@ struct Matrix<T, const N: usize> {
 impl<T: Default + Copy, const N: usize> Matrix<T, N> {
 	const CHECK: () = assert!(N > 1 && N < 4);
 
-	pub fn new(values: Option<[[T; N]; N]>) -> Matrix<T, N> {
+	pub fn new(values: Option<MatrixFill<T, N>>) -> Matrix<T, N> {
 		let mut data = [[T::default(); N]; N];
 
-		if let Some(values) = values {
-			for (i, row) in values.iter().enumerate() {
-				data[i] = *row;
+		if let Some(fill) = values {
+			match fill {
+				MatrixFill::Array(values) => {
+					for (i, row) in values.iter().enumerate() {
+						data[i] = *row;
+					}
+				}
+				MatrixFill::Single(value) => {
+					for row in &mut data {
+						for elem in row.iter_mut() {
+							*elem = value;
+						}
+					}
+				}
 			}
 		}
 
@@ -48,7 +59,7 @@ mod tests {
 			[-3., 5.],
 			[1., -2.]
 		];
-		let matrix2x2_filled = Matrix::new(Some(fill_array));
+		let matrix2x2_filled = Matrix::new(Some(MatrixFill::Array(fill_array)));
 		assert_eq!(matrix2x2_filled.data, fill_array);
 
 		let fill_array: [[f32; 3]; 3] = [
@@ -56,7 +67,7 @@ mod tests {
 			[1., -2., 7.],
 			[1., -2., 1.]
 		];
-		let matrix3x3_filled = Matrix::new(Some(fill_array));
+		let matrix3x3_filled = Matrix::new(Some(MatrixFill::Array(fill_array)));
 		assert_eq!(matrix3x3_filled.data, fill_array);
 
 		let fill_array: [[f32; 4]; 4] = [
@@ -65,7 +76,19 @@ mod tests {
 			[9., 10., 11., 12.],
 			[13.5, 14.5, 15.5, 16.5]
 		];
-		let matrix4x4_filled = Matrix::new(Some(fill_array));
+		let matrix4x4_filled = Matrix::new(Some(MatrixFill::Array(fill_array)));
 		assert_eq!(matrix4x4_filled.data, fill_array);
+	}
+
+	#[test]
+	fn test_set_function() {
+		let mut matrix2x2 = Matrix::new(None);
+
+		matrix2x2.set(0, 0, 1.0);
+		matrix2x2.set(0, 1, 2.0);
+		matrix2x2.set(1, 0, 3.0);
+		matrix2x2.set(1, 1, 4.0);
+
+		assert_eq!(matrix2x2.data, [[1.0, 2.0], [3.0, 4.0]]);
 	}
 }

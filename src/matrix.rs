@@ -1,6 +1,7 @@
 // #![allow(incomplete_features)]
 // #![feature(generic_const_exprs, adt_const_params, const_generics, const_evaluatable_checked)]
 
+#[allow(dead_code)]
 #[repr(usize)]
 enum MatrixSize {
 	_2X2 = 2,
@@ -8,6 +9,7 @@ enum MatrixSize {
 	_4X4 = 4,
 }
 
+#[allow(dead_code)]
 enum MatrixFill<T, const N: usize> {
 	Array([[T; N]; N]),
 	Single(T),
@@ -19,8 +21,10 @@ struct Matrix<T, const N: usize> {
 }
 
 impl<T: Default + Copy, const N: usize> Matrix<T, N> {
+	#[allow(dead_code)]
 	const CHECK: () = assert!(N > 1 && N < 4);
 
+	#[allow(dead_code)]
 	pub fn new(values: Option<MatrixFill<T, N>>) -> Matrix<T, N> {
 		let mut data = [[T::default(); N]; N];
 
@@ -44,6 +48,7 @@ impl<T: Default + Copy, const N: usize> Matrix<T, N> {
 		Matrix { data }
 	}
 
+	#[allow(dead_code)]
 	pub fn set(&mut self, row: usize, col: usize, value: T) {
 		self.data[row][col] = value;
 	}

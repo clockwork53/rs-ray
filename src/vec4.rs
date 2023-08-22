@@ -13,7 +13,7 @@ pub struct Vec4 {
 impl Add for Vec4 {
 	type Output = Self;
 	fn add(self, rhs: Self) -> Self::Output {
-		if self.w == 1f32 && rhs.w == 1f32 {
+		if self.w == 1. && rhs.w == 1. {
 			panic!("Illegal Operation: Adding two points!");
 		}
 		Self { x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z, w: self.w + rhs.w }
@@ -23,7 +23,7 @@ impl Add for Vec4 {
 impl Sub for Vec4 {
 	type Output = Self;
 	fn sub(self, rhs: Self) -> Self::Output {
-		if self.w == 0f32 && rhs.w == 1f32 {
+		if self.w == 0. && rhs.w == 1. {
 			panic!("Illegal Operation: Subtracting a point from a vector!");
 		}
 		Self { x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z, w: self.w - rhs.w }
@@ -33,7 +33,7 @@ impl Sub for Vec4 {
 impl Neg for Vec4 {
 	type Output = Self;
 	fn neg(self) -> Self::Output {
-		if self.w == 1f32 {
+		if self.w == 1. {
 			panic!("Illegal Operation: Negating a point!");
 		}
 		Self { x: -self.x, y: -self.y, z: -self.z, w: -self.w }
@@ -50,7 +50,7 @@ impl Mul<f32> for Vec4 {
 impl Div<f32> for Vec4 {
 	type Output = Self;
 	fn div(self, rhs: f32) -> Self::Output {
-		if rhs == 0f32 {
+		if rhs == 0. {
 			panic!("Illegal Operation: Division by zero!");
 		}
 		Self { x: self.x / rhs, y: self.y / rhs, z: self.z / rhs, w: self.w / rhs }
@@ -80,6 +80,7 @@ impl Vec4 {
 		Vec4 { x: self.x / magnitude, y: self.y / magnitude, z: self.z / magnitude, w: self.w / magnitude }
 	}
 
+	#[allow(dead_code)]
 	pub fn dot(self, other: Vec4) -> f32 {
 		(self.x * other.x) +
 			(self.y * other.y) +
@@ -87,8 +88,9 @@ impl Vec4 {
 			(self.w * other.w)
 	}
 
+	#[allow(dead_code)]
 	pub fn cross(self, other: Vec4) -> Vec4 {
-		if self.w != 0f32 || other.w != 0f32 {
+		if self.w != 0. || other.w != 0. {
 			panic!("Illegal Operation: Cross product involving a point!");
 		}
 		vector(

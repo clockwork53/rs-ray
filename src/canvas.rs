@@ -17,6 +17,7 @@ impl Canvas {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn get_width(&self) -> u64 {
 		self.width
 	}
@@ -33,12 +34,47 @@ impl Canvas {
 		self.grid[position as usize] = color;
 	}
 
+	#[allow(dead_code)]
 	pub fn pixel_at(self, x: u64, y: u64) -> Option<Vec3> {
 		if x > self.width - 1 || y > self.height - 1 {
 			return None;
 		}
 		let position = x + (y * self.width);
 		Some(self.grid[position as usize])
+	}
+
+	#[allow(dead_code)]
+	pub fn canvas_to_ppm_new(self) -> String {
+		const MAX_COLOR_VALUE: f32 = 255.;
+		const LINE_LENGTH_LIMIT: usize = 69;
+		const NEWLINE: &str = "\n";
+
+		let mut ppm = format!("P3\n{} {}\n255\n", self.width, self.height);
+		let mut line_length = 0;
+
+		let pixel_data = self.grid.iter().flat_map(|pixel| vec![pixel.r, pixel.g, pixel.b]);
+
+		for (i, color) in pixel_data.enumerate() {
+			let component_value = (color * MAX_COLOR_VALUE).ceil().clamp(0.0, MAX_COLOR_VALUE);
+			let component_string = format!("{}", component_value);
+
+			if line_length + component_string.len() > LINE_LENGTH_LIMIT {
+				ppm.push_str(NEWLINE);
+				line_length = 0;
+			} else if i > 0 && !((i + 1) % 3 == 1 && (i + 1) % (self.width as usize * 3) == 1) {
+				ppm.push_str(" ");
+				line_length += 1;
+			}
+
+			ppm.push_str(&component_string);
+			line_length += component_string.len();
+
+			if (i + 1) % 3 == 0 && (i + 1) % (self.width as usize * 3) == 0 {
+				ppm.push_str(NEWLINE);
+				line_length = 0;
+			}
+		}
+		ppm
 	}
 
 	pub fn canvas_to_ppm(self) -> String {

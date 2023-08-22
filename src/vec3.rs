@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Mul, Sub};
 
 pub const EPSILON: f32 = 0.00001;
 

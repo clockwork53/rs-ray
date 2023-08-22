@@ -1,6 +1,7 @@
 // #![allow(incomplete_features)]
 // #![feature(generic_const_exprs, adt_const_params, const_generics, const_evaluatable_checked)]
 
+use std::fmt::Debug;
 use std::ops::{Add, Mul};
 use crate::tuple::Tuple;
 
@@ -18,21 +19,35 @@ pub enum MatrixFill<T, const N: usize> {
 }
 
 #[derive(Debug, PartialEq)]
-struct Matrix<T, const N: usize> {
+pub struct Matrix<T, const N: usize> {
 	data: [[T; N]; N],
 }
 
-impl<T: Default + Copy + Add<Output=T> + Mul<Output=T>> Mul<Matrix<T, 4>> for Matrix<T, 4> {
+pub const IDENTITY_MATRIX: Matrix<u8, 4> = Matrix
+{
+	data: [
+		[1, 0, 0, 0],
+		[0, 1, 0, 0],
+		[0, 0, 1, 0],
+		[0, 0, 0, 1]
+	]
+};
+
+impl<T, F> Mul<Matrix<F, 4>> for Matrix<T, 4>
+	where T: Default + Copy + Add<Output=T> + Mul<Output=T>,
+	      F: Default + Copy + TryInto<T>,
+	      <F as TryInto<T>>::Error: Debug
+{
 	type Output = Self;
-	fn mul(self, rhs: Matrix<T, 4>) -> Self::Output {
+	fn mul(self, rhs: Matrix<F, 4>) -> Self::Output {
 		let mut res = Matrix::new(None);
 		for row in 0..=3 {
 			for col in 0..=3 {
 				let val =
-					(self.data[row][0] * rhs.data[0][col]) +
-						(self.data[row][1] * rhs.data[1][col]) +
-						(self.data[row][2] * rhs.data[2][col]) +
-						(self.data[row][3] * rhs.data[3][col]);
+					self.get(row, 0) * rhs.get(0, col).try_into().unwrap() +
+						self.get(row, 1) * rhs.get(1, col).try_into().unwrap() +
+						self.get(row, 2) * rhs.get(2, col).try_into().unwrap() +
+						self.get(row, 3) * rhs.get(3, col).try_into().unwrap();
 				res.set(row, col, val);
 			}
 		}
@@ -40,16 +55,20 @@ impl<T: Default + Copy + Add<Output=T> + Mul<Output=T>> Mul<Matrix<T, 4>> for Ma
 	}
 }
 
-impl<T: Default + Copy + Add<Output=T> + Mul<Output=T>> Mul<Tuple<T>> for Matrix<T, 4> {
+impl<T, F> Mul<Tuple<T>> for Matrix<F, 4>
+	where T: Default + Copy + Add<Output=T> + Mul<Output=T>,
+	      F: Default + Copy + TryInto<T>,
+	      <F as TryInto<T>>::Error: Debug
+{
 	type Output = Tuple<T>;
 	fn mul(self, rhs: Tuple<T>) -> Self::Output {
 		let mut res = Tuple::new(None);
 		for row in 0..=3 {
 			let val =
-				(self.data[row][0] * rhs.get(0)) +
-					(self.data[row][1] * rhs.get(1)) +
-					(self.data[row][2] * rhs.get(2)) +
-					(self.data[row][3] * rhs.get(3));
+				self.get(row, 0).try_into().unwrap() * rhs.get(0) +
+					self.get(row, 1).try_into().unwrap() * rhs.get(1) +
+					self.get(row, 2).try_into().unwrap() * rhs.get(2) +
+					self.get(row, 3).try_into().unwrap() * rhs.get(3);
 			res.set(row, val);
 		}
 		res
@@ -191,6 +210,31 @@ mod tests {
 
 		let fill_array_c: [i64; 4] = [18, 24, 33, 1];
 		assert_eq!(matrix4x4_filled_a.mul(tuple4x1_filled_b).data, fill_array_c)
+	}
+
+	#[test]
+	fn test_multiplying_by_identity_matrix() {
+		let fill_array_a: [[i64; 4]; 4] = [
+			[1, 2, 3, 4],
+			[2, 4, 4, 2],
+			[8, 6, 4, 1],
+			[0, 0, 0, 1]
+		];
+		let fill_array_c: [[f32; 4]; 4] = [
+			[1., 2., 3., 4.],
+			[2., 4., 4., 2.],
+			[8., 6., 4., 1.],
+			[0., 0., 0., 1.]
+		];
+		let matrix4x4_filled_a = Matrix::new(Some(MatrixFill::Array(fill_array_a)));
+		let matrix4x4_filled_c = Matrix::new(Some(MatrixFill::Array(fill_array_c)));
+		assert_eq!(matrix4x4_filled_a.mul(IDENTITY_MATRIX).data, fill_array_a);
+		assert_eq!(matrix4x4_filled_c.mul(IDENTITY_MATRIX).data, fill_array_c);
+
+		let fill_array_b: [i64; 4] = [1, 2, 3, 1];
+		let tuple4x1_filled_b = Tuple::new(Some(TupleFill::Array(fill_array_b)));
+
+		assert_eq!(IDENTITY_MATRIX.mul(tuple4x1_filled_b).data, fill_array_b)
 	}
 
 	#[test]

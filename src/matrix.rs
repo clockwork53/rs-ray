@@ -77,110 +77,78 @@ impl<T, F> Mul<Tuple<T>> for Matrix<F, 4>
 	}
 }
 
-// 2x2
-impl<T: Default + Copy + Mul<Output=T> + Sub<Output=T> + PartialEq> Matrix<T, 2> {
-	pub fn determinant(&self) -> T {
-		self.get(0, 0) * self.get(1, 1) - self.get(0, 1) * self.get(1, 0)
-	}
 
-	pub fn invertible(&self) -> bool {
-		self.determinant() != T::default()
-	}
+macro_rules! impl_matrix_n_x_n {
+	(2) => {
+		impl<T> Matrix<T, 2>
+		where
+            T: Default + Copy + Mul<Output = T> + Sub<Output = T> + Add<Output = T> + Neg<Output = T> + PartialEq,
+		{
+			pub fn determinant(&self) -> T {
+				self.get(0, 0) * self.get(1, 1) - self.get(0, 1) * self.get(1, 0)
+			}
+
+			pub fn invertible(&self) -> bool {
+				self.determinant() != T::default()
+			}
+		}
+	};
+    ($size:expr) => {
+        impl<T> Matrix<T, $size>
+        where
+            T: Default + Copy + Mul<Output = T> + Sub<Output = T> + Add<Output = T> + Neg<Output = T> + PartialEq,
+        {
+            pub fn sub_matrix(&self, row: usize, col: usize) -> Matrix<T, {$size - 1}> {
+                let mut sub_matrix = Matrix::new(None);
+                let mut sub_row = 0;
+                for c_row in 0..$size {
+                    if c_row == row {
+                        continue;
+                    }
+                    let mut sub_col = 0;
+                    for c_col in 0..$size {
+                        if c_col == col {
+                            continue;
+                        }
+                        sub_matrix.set(sub_row, sub_col, self.get(c_row, c_col));
+                        sub_col += 1;
+                    }
+                    sub_row += 1;
+                }
+                sub_matrix
+            }
+
+            pub fn minor(&self, row: usize, col: usize) -> T {
+                self.sub_matrix(row, col).determinant()
+            }
+
+            pub fn cofactor(&self, row: usize, col: usize) -> T {
+                if row + col % 2 == 0 {
+                    self.minor(row, col)
+                } else {
+                    -self.minor(row, col)
+                }
+            }
+
+            pub fn determinant(&self) -> T {
+                let mut result = T::default();
+                for col in 0..$size {
+                    result = result + self.get(0, col) * self.cofactor(0, col);
+                }
+                result
+            }
+
+            pub fn invertible(&self) -> bool {
+                self.determinant() != T::default()
+            }
+        }
+    };
 }
 
-// 3x3
-impl<T> Matrix<T, 3>
-	where T: Default + Copy + Mul<Output=T> + Sub<Output=T> + Add<Output=T> + Neg<Output=T> + PartialEq {
-	pub fn sub_matrix(&self, row: usize, col: usize) -> Matrix<T, 2> {
-		let mut sub_matrix = Matrix::new(None);
-		let mut sub_row = 0;
-		for c_row in 0..3 {
-			if c_row == row {
-				continue;
-			}
-			let mut sub_col = 0;
-			for c_col in 0..3 {
-				if c_col == col {
-					continue;
-				}
-				sub_matrix.set(sub_row, sub_col, self.get(c_row, c_col));
-				sub_col += 1;
-			}
-			sub_row += 1;
-		}
-		sub_matrix
-	}
+impl_matrix_n_x_n!(2);
+impl_matrix_n_x_n!(3);
+impl_matrix_n_x_n!(4);
 
-	pub fn minor(&self, row: usize, col: usize) -> T {
-		self.sub_matrix(row, col).determinant()
-	}
-
-	pub fn cofactor(&self, row: usize, col: usize) -> T {
-		if row + col % 2 == 0 {
-			self.minor(row, col)
-		} else {
-			-self.minor(row, col)
-		}
-	}
-
-	pub fn determinant(&self) -> T {
-		self.get(0, 0) * self.cofactor(0, 0) +
-			self.get(0, 1) * self.cofactor(0, 1) +
-			self.get(0, 2) * self.cofactor(0, 2)
-	}
-
-	pub fn invertible(&self) -> bool {
-		self.determinant() != T::default()
-	}
-}
-
-
-// 4x4
-impl<T> Matrix<T, 4>
-	where T: Default + Copy + Mul<Output=T> + Sub<Output=T> + Add<Output=T> + Neg<Output=T> + PartialEq {
-	pub fn sub_matrix(&self, row: usize, col: usize) -> Matrix<T, 3> {
-		let mut sub_matrix = Matrix::new(None);
-		let mut sub_row = 0;
-		for c_row in 0..4 {
-			if c_row == row {
-				continue;
-			}
-			let mut sub_col = 0;
-			for c_col in 0..4 {
-				if c_col == col {
-					continue;
-				}
-				sub_matrix.set(sub_row, sub_col, self.get(c_row, c_col));
-				sub_col += 1;
-			}
-			sub_row += 1;
-		}
-		sub_matrix
-	}
-
-	pub fn minor(&self, row: usize, col: usize) -> T {
-		self.sub_matrix(row, col).determinant()
-	}
-
-	pub fn cofactor(&self, row: usize, col: usize) -> T {
-		if row + col % 2 == 0 {
-			self.minor(row, col)
-		} else {
-			-self.minor(row, col)
-		}
-	}
-
-	pub fn determinant(&self) -> T {
-		self.get(0, 0) * self.cofactor(0, 0) +
-			self.get(0, 1) * self.cofactor(0, 1) +
-			self.get(0, 2) * self.cofactor(0, 2) +
-			self.get(0, 3) * self.cofactor(0, 3)
-	}
-
-	pub fn invertible(&self) -> bool {
-		self.determinant() != T::default()
-	}
-}
 
 // NxN
 impl<T: Default + Copy, const N: usize> Matrix<T, N> {

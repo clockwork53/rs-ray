@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub enum TupleFill<T> {
 	Array([T; 4]),
 	Single(T),

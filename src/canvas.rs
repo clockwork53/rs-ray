@@ -5,7 +5,7 @@ use crate::vec3::{color, Vec3};
 pub struct Canvas {
 	width: u64,
 	height: u64,
-	grid: Vec<Vec3>
+	grid: Vec<Vec3>,
 }
 
 impl Canvas {
@@ -13,7 +13,7 @@ impl Canvas {
 		Canvas {
 			width,
 			height,
-			grid: vec![color(0., 0., 0.); (width * height) as usize]
+			grid: vec![color(0., 0., 0.); (width * height) as usize],
 		}
 	}
 
@@ -26,19 +26,19 @@ impl Canvas {
 	}
 
 	pub fn write_pixel(&mut self, x: u64, y: u64, color: Vec3) {
-		if  x > self.width-1 || y > self.height-1 {
-			panic!("Illegal Operation: Writing out of canvas bounds!");
+		if x > self.width - 1 || y > self.height - 1 {
+			return;
 		}
 		let position = x + (y * self.width);
 		self.grid[position as usize] = color;
 	}
 
-	pub fn pixel_at(self, x: u64, y: u64) -> Vec3 {
-		if  x > self.width-1 || y > self.height-1 {
-			panic!("Illegal Operation: Reading out of canvas bounds!");
+	pub fn pixel_at(self, x: u64, y: u64) -> Option<Vec3> {
+		if x > self.width - 1 || y > self.height - 1 {
+			return None;
 		}
 		let position = x + (y * self.width);
-		self.grid[position as usize]
+		Some(self.grid[position as usize])
 	}
 
 	pub fn canvas_to_ppm(self) -> String {
@@ -78,10 +78,10 @@ impl Canvas {
 			data.push_str(format!("{}", pxb).as_str());
 			current_line_length += pxb.chars().count() + 1;
 
-			if (pos+1) as u64 % self.width == 0 || pos == self.grid.len()-1 {
+			if (pos + 1) as u64 % self.width == 0 || pos == self.grid.len() - 1 {
 				data.push_str("\n");
 				current_line_length = 0;
-			}else {
+			} else {
 				data.push_str(" ");
 			}
 		}
@@ -121,7 +121,7 @@ mod tests {
 		let mut c = Canvas::new(10, 20);
 		let red = color(1., 0., 0.);
 		c.write_pixel(2, 3, red);
-		assert_eq!(c.pixel_at(2, 3), red);
+		assert_eq!(c.pixel_at(2, 3).unwrap(), red);
 	}
 
 	#[test]
@@ -134,7 +134,7 @@ mod tests {
 		c.write_pixel(2, 1, c2);
 		c.write_pixel(4, 2, c3);
 		assert_eq!(c.canvas_to_ppm(),
-           "P3\n5 3\n255\n255 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 128 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255\n"
+		           "P3\n5 3\n255\n255 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 128 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255\n"
 		)
 	}
 
@@ -147,7 +147,7 @@ mod tests {
 			}
 		}
 		assert_eq!(c.canvas_to_ppm(),
-           "P3\n10 2\n255\n255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204\n153 255 204 153 255 204 153 255 204 153 255 204 153\n255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204\n153 255 204 153 255 204 153 255 204 153 255 204 153\n"
+		           "P3\n10 2\n255\n255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204\n153 255 204 153 255 204 153 255 204 153 255 204 153\n255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204\n153 255 204 153 255 204 153 255 204 153 255 204 153\n"
 		)
 	}
 }

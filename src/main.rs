@@ -23,30 +23,36 @@ fn tick(env: &Environment, proj: &Projectile) -> Projectile {
 }
 
 fn main() {
-	let mut p = Projectile { position: point(0f32, 1f32, 0f32), velocity: vector(1f32, 1f32, 0f32).normalize() };
-	let e = Environment { gravity: vector(0f32, -0.1, 0f32), wind: vector(-0.01, 0f32, 0f32) };
+	let mut p = Projectile {
+		position: point(0., 1., 0.),
+		velocity: vector(1., 1.8, 0.).normalize() * 11.25,
+	};
+	let e = Environment {
+		gravity: vector(0f32, -0.1, 0f32),
+		wind: vector(-0.01, 0f32, 0f32),
+	};
 
-	let mut canvas = Canvas::new(900, 500);
+	let mut canvas = Canvas::new(900, 550);
 
 	let red_color = color(1., 0., 0.);
 	canvas.write_pixel(
-		(p.position.x as u64).clamp(0, 900),
-		(canvas.get_height() - (p.position.y as u64)).clamp(0, 500),
-		red_color
+		p.position.x as u64,
+		(canvas.get_height() as f32 - p.position.y) as i64 as u64,
+		red_color,
 	);
 
 	let mut ticks = 0;
-	while &p.position.y - 0f32 > EPSILON {
+	while &p.position.y - 0. > EPSILON {
 		ticks += 1;
 		p = tick(&e, &p);
 		canvas.write_pixel(
-			(p.position.x as u64).clamp(0, 899),
-			(canvas.get_height() - (p.position.y as u64)).clamp(0, 499),
-			red_color
+			p.position.x as u64,
+			(canvas.get_height() as f32 - p.position.y) as i64 as u64,
+			red_color,
 		);
 		// dbg!(&p);
 	}
-	dbg!(&p);
+	// dbg!(&p);
 	dbg!(ticks);
 	canvas.save_to_file("/home/clockwork/Projects/Practice/rs-ray/pic.ppm".to_string());
 }

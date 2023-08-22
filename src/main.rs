@@ -7,6 +7,7 @@ mod vec4;
 mod vec3;
 mod canvas;
 mod matrix;
+mod tuple;
 
 #[derive(Debug)]
 struct Projectile {

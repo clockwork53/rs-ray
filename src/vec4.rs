@@ -1,12 +1,24 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
-use crate::misc::EPSILON;
+use crate::misc::{EPSILON, Float};
+use crate::tuple::{Tuple};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec4 {
-	pub x: f32,
-	pub y: f32,
-	pub z: f32,
-	pub w: f32,
+	pub x: Float,
+	pub y: Float,
+	pub z: Float,
+	pub w: Float,
+}
+
+impl From<Tuple<Float>> for Vec4 {
+	fn from(value: Tuple<Float>) -> Self {
+		Vec4 {
+			x: value.data[0],
+			y: value.data[1],
+			z: value.data[2],
+			w: value.data[3],
+		}
+	}
 }
 
 impl Add for Vec4 {
@@ -39,16 +51,16 @@ impl Neg for Vec4 {
 	}
 }
 
-impl Mul<f32> for Vec4 {
+impl Mul<Float> for Vec4 {
 	type Output = Self;
-	fn mul(self, rhs: f32) -> Self::Output {
+	fn mul(self, rhs: Float) -> Self::Output {
 		Self { x: self.x * rhs, y: self.y * rhs, z: self.z * rhs, w: self.w * rhs }
 	}
 }
 
-impl Div<f32> for Vec4 {
+impl Div<Float> for Vec4 {
 	type Output = Self;
-	fn div(self, rhs: f32) -> Self::Output {
+	fn div(self, rhs: Float) -> Self::Output {
 		if rhs == 0. {
 			panic!("Illegal Operation: Division by zero!");
 		}
@@ -58,15 +70,15 @@ impl Div<f32> for Vec4 {
 
 impl PartialEq for Vec4 {
 	fn eq(&self, other: &Self) -> bool {
-		f32::abs(self.x - other.x) < EPSILON &&
-			f32::abs(self.y - other.y) < EPSILON &&
-			f32::abs(self.z - other.z) < EPSILON &&
-			f32::abs(self.w - other.w) < EPSILON
+		Float::abs(self.x - other.x) < EPSILON &&
+		Float::abs(self.y - other.y) < EPSILON &&
+		Float::abs(self.z - other.z) < EPSILON &&
+		Float::abs(self.w - other.w) < EPSILON
 	}
 }
 
 impl Vec4 {
-	pub fn magnitude(self) -> f32 {
+	pub fn magnitude(self) -> Float {
 		let x2 = self.x * self.x;
 		let y2 = self.y * self.y;
 		let z2 = self.z * self.z;
@@ -80,7 +92,7 @@ impl Vec4 {
 	}
 
 	#[allow(dead_code)]
-	pub fn dot(self, other: Vec4) -> f32 {
+	pub fn dot(self, other: Vec4) -> Float {
 		(self.x * other.x) +
 			(self.y * other.y) +
 			(self.z * other.z) +
@@ -100,12 +112,12 @@ impl Vec4 {
 	}
 }
 
-pub fn point(x: f32, y: f32, z: f32) -> Vec4 {
-	Vec4 { x, y, z, w: 1f32 }
+pub fn point(x: Float, y: Float, z: Float) -> Vec4 {
+	Vec4 { x, y, z, w: 1. }
 }
 
-pub fn vector(x: f32, y: f32, z: f32) -> Vec4 {
-	Vec4 { x, y, z, w: 0f32 }
+pub fn vector(x: Float, y: Float, z: Float) -> Vec4 {
+	Vec4 { x, y, z, w: 0. }
 }
 
 

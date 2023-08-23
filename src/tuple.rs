@@ -1,3 +1,6 @@
+use crate::misc::Float;
+use crate::vec4::Vec4;
+
 #[allow(dead_code)]
 pub enum TupleFill<T> {
 	Array([T; 4]),
@@ -7,6 +10,17 @@ pub enum TupleFill<T> {
 #[derive(Debug, PartialEq)]
 pub struct Tuple<T> {
 	pub data: [T; 4],
+}
+
+impl From<Vec4> for Tuple<Float> {
+	fn from(value: Vec4) -> Self {
+		Tuple::new(Some(TupleFill::Array([
+			value.x,
+			value.y,
+			value.z,
+			value.w,
+		])))
+	}
 }
 
 impl<T: Default + Copy> Tuple<T> {

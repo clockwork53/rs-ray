@@ -1,12 +1,12 @@
 use std::ops::{Add, Mul, Sub};
-use crate::misc::EPSILON;
+use crate::misc::{EPSILON, Float};
 
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
-	pub r: f32,
-	pub g: f32,
-	pub b: f32,
+	pub r: Float,
+	pub g: Float,
+	pub b: Float,
 }
 
 impl Add for Vec3 {
@@ -23,9 +23,9 @@ impl Sub for Vec3 {
 	}
 }
 
-impl Mul<f32> for Vec3 {
+impl Mul<Float> for Vec3 {
 	type Output = Self;
-	fn mul(self, rhs: f32) -> Self::Output {
+	fn mul(self, rhs: Float) -> Self::Output {
 		Self { r: self.r * rhs, g: self.g * rhs, b: self.b * rhs }
 	}
 }
@@ -40,14 +40,14 @@ impl Mul<Vec3> for Vec3 {
 
 impl PartialEq for Vec3 {
 	fn eq(&self, other: &Self) -> bool {
-		f32::abs(self.r - other.r) < EPSILON &&
-			f32::abs(self.g - other.g) < EPSILON &&
-			f32::abs(self.b - other.b) < EPSILON
+		Float::abs(self.r - other.r) < EPSILON &&
+		Float::abs(self.g - other.g) < EPSILON &&
+		Float::abs(self.b - other.b) < EPSILON
 	}
 }
 
 
-pub fn color(r: f32, g: f32, b: f32) -> Vec3 {
+pub fn color(r: Float, g: Float, b: Float) -> Vec3 {
 	Vec3 { r, g, b }
 }
 

@@ -1,5 +1,5 @@
 use crate::canvas::Canvas;
-use crate::misc::EPSILON;
+use crate::misc::{EPSILON, Float};
 use crate::vec3::color;
 use crate::vec4::{point, vector};
 use self::vec4::Vec4;
@@ -9,6 +9,7 @@ mod vec3;
 mod canvas;
 mod matrix;
 mod tuple;
+mod transform;
 mod misc;
 
 #[derive(Debug)]
@@ -32,8 +33,8 @@ fn main() {
 		velocity: vector(1., 1.8, 0.).normalize() * 11.25,
 	};
 	let e = Environment {
-		gravity: vector(0f32, -0.1, 0f32),
-		wind: vector(-0.01, 0f32, 0f32),
+		gravity: vector(0., -0.1, 0.),
+		wind: vector(-0.01, 0., 0.),
 	};
 
 	let mut canvas = Canvas::new(900, 550);
@@ -41,7 +42,7 @@ fn main() {
 	let red_color = color(1., 0., 0.);
 	canvas.write_pixel(
 		p.position.x as u64,
-		(canvas.get_height() as f32 - p.position.y) as i64 as u64,
+		(canvas.get_height() as Float - p.position.y) as i64 as u64,
 		red_color,
 	);
 
@@ -51,7 +52,7 @@ fn main() {
 		p = tick(&e, &p);
 		canvas.write_pixel(
 			p.position.x as u64,
-			(canvas.get_height() as f32 - p.position.y) as i64 as u64,
+			(canvas.get_height() as Float - p.position.y) as i64 as u64,
 			red_color,
 		);
 		// dbg!(&p);

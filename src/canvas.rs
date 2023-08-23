@@ -1,5 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+use crate::misc::Float;
 use crate::vec3::{color, Vec3};
 
 pub struct Canvas {
@@ -34,6 +35,7 @@ impl Canvas {
 		self.grid[position as usize] = color;
 	}
 
+	#[allow(dead_code)]
 	pub fn pixel_at(self, x: u64, y: u64) -> Option<Vec3> {
 		if x > self.width - 1 || y > self.height - 1 {
 			return None;
@@ -44,7 +46,7 @@ impl Canvas {
 
 	#[allow(dead_code)]
 	pub fn canvas_to_ppm_new(self) -> String {
-		const MAX_COLOR_VALUE: f32 = 255.;
+		const MAX_COLOR_VALUE: Float = 255.;
 		const LINE_LENGTH_LIMIT: usize = 69;
 		const NEWLINE: &str = "\n";
 

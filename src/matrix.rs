@@ -2,6 +2,8 @@ use std::fmt::Debug;
 use std::ops::{Mul, Neg, Sub};
 use crate::tuple::Tuple;
 use crate::misc::{EPSILON, Float};
+use crate::transform::{rotation_x, rotation_y, rotation_z, scaling, shearing, translation};
+use crate::vec4::Vec4;
 
 #[allow(dead_code)]
 #[repr(usize)]
@@ -22,6 +24,7 @@ pub struct Matrix<T, const N: usize> {
 	data: [[T; N]; N],
 }
 
+#[allow(dead_code)]
 pub const IDENTITY_MATRIX: Matrix<Float, 4> = Matrix
 {
 	data: [
@@ -65,6 +68,14 @@ impl Mul<Tuple<Float>> for Matrix<Float, 4> {
 			res.set(row, val);
 		}
 		res
+	}
+}
+
+// 4x4 * 4x1
+impl Mul<Vec4> for Matrix<Float, 4> {
+	type Output = Vec4;
+	fn mul(self, rhs: Vec4) -> Self::Output {
+		(self * Tuple::from(rhs)).into()
 	}
 }
 
@@ -211,6 +222,36 @@ impl Matrix<Float, 4> {
 		}
         Some(res)
 	}
+
+	#[allow(dead_code)]
+	pub fn translate(&self, x: Float, y: Float, z: Float) -> Self {
+		translation(x, y, z) * self
+	}
+
+	#[allow(dead_code)]
+	pub fn scale(&self, x: Float, y: Float, z: Float) -> Self {
+		scaling(x, y, z) * self
+	}
+
+	#[allow(dead_code)]
+	pub fn rotate_x(&self, radians: Float) -> Self {
+		rotation_x(radians) * self
+	}
+
+	#[allow(dead_code)]
+	pub fn rotate_y(&self, radians: Float) -> Self {
+		rotation_y(radians) * self
+	}
+
+	#[allow(dead_code)]
+	pub fn rotate_z(&self, radians: Float) -> Self {
+		rotation_z(radians) * self
+	}
+
+	#[allow(dead_code)]
+	pub fn shear(&self, x_y: Float, x_z: Float, y_x: Float, y_z: Float, z_x: Float, z_y: Float) -> Self {
+		shearing(x_y, x_z, y_x, y_z, z_x, z_y) * self
+	}
 }
 
 
@@ -260,6 +301,7 @@ impl<T: Default + Copy, const N: usize> Matrix<T, N> {
 		Matrix { data }
 	}
 
+	#[allow(dead_code)]
 	pub fn transpose(&mut self) {
 		for i in 0..N {
 			for j in (i + 1)..N {

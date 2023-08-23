@@ -23,11 +23,15 @@ struct Environment {
 	wind: Vec4,
 }
 
-fn tick(env: &Environment, proj: &Projectile) -> Projectile {
-	Projectile { position: proj.position + proj.velocity, velocity: proj.velocity + env.gravity + env.wind }
+fn main() {
+	draw_projectile();
 }
 
-fn main() {
+fn draw_projectile() {
+	fn tick(env: &Environment, proj: &Projectile) -> Projectile {
+		Projectile { position: proj.position + proj.velocity, velocity: proj.velocity + env.gravity + env.wind }
+	}
+
 	let mut p = Projectile {
 		position: point(0., 1., 0.),
 		velocity: vector(1., 1.8, 0.).normalize() * 11.25,
@@ -59,5 +63,5 @@ fn main() {
 	}
 	// dbg!(&p);
 	dbg!(ticks);
-	canvas.save_to_file("/home/clockwork/Projects/Practice/rs-ray/pic.ppm".to_string());
+	canvas.save_to_file("/home/clockwork/Projects/Practice/rs-ray/projectile.ppm".to_string());
 }

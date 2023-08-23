@@ -1,7 +1,7 @@
 use std::fmt::Debug;
-use std::ops::{Add, Mul, Div, Neg, Sub};
+use std::ops::{Mul, Neg, Sub};
 use crate::tuple::Tuple;
-use crate::vec3::EPSILON;
+use crate::misc::{EPSILON, Float};
 
 #[allow(dead_code)]
 #[repr(usize)]
@@ -17,37 +17,33 @@ pub enum MatrixFill<T, const N: usize> {
 	Single(T),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Matrix<T, const N: usize> {
 	data: [[T; N]; N],
 }
 
-pub const IDENTITY_MATRIX: Matrix<u8, 4> = Matrix
+pub const IDENTITY_MATRIX: Matrix<Float, 4> = Matrix
 {
 	data: [
-		[1, 0, 0, 0],
-		[0, 1, 0, 0],
-		[0, 0, 1, 0],
-		[0, 0, 0, 1]
+		[1., 0., 0., 0.],
+		[0., 1., 0., 0.],
+		[0., 0., 1., 0.],
+		[0., 0., 0., 1.]
 	]
 };
 
 // 4x4 * 4x4
-impl<T, F> Mul<&Matrix<F, 4>> for Matrix<T, 4>
-	where T: Default + Copy + Add<Output=T> + Mul<Output=T>,
-	      F: Default + Copy + TryInto<T>,
-	      <F as TryInto<T>>::Error: Debug
-{
+impl Mul<&Matrix<Float, 4>> for Matrix<Float, 4> {
 	type Output = Self;
-	fn mul(self, rhs: &Matrix<F, 4>) -> Self::Output {
-		let mut res = Matrix::new(None);
+	fn mul(self, rhs: &Matrix<Float, 4>) -> Self::Output {
+		let mut res: Matrix<Float, 4> = Matrix::new(None);
 		for row in 0..4 {
 			for col in 0..4 {
 				let val =
-					self.get(row, 0) * rhs.get(0, col).try_into().unwrap() +
-						self.get(row, 1) * rhs.get(1, col).try_into().unwrap() +
-						self.get(row, 2) * rhs.get(2, col).try_into().unwrap() +
-						self.get(row, 3) * rhs.get(3, col).try_into().unwrap();
+					self.get(row, 0).unwrap() * rhs.get(0, col).unwrap() +
+					self.get(row, 1).unwrap() * rhs.get(1, col).unwrap() +
+					self.get(row, 2).unwrap() * rhs.get(2, col).unwrap() +
+					self.get(row, 3).unwrap() * rhs.get(3, col).unwrap();
 				res.set(row, col, val);
 			}
 		}
@@ -56,129 +52,178 @@ impl<T, F> Mul<&Matrix<F, 4>> for Matrix<T, 4>
 }
 
 // 4x4 * 4x1
-impl<T, F> Mul<Tuple<T>> for Matrix<F, 4>
-	where T: Default + Copy + Add<Output=T> + Mul<Output=T>,
-	      F: Default + Copy + TryInto<T>,
-	      <F as TryInto<T>>::Error: Debug
-{
-	type Output = Tuple<T>;
-	fn mul(self, rhs: Tuple<T>) -> Self::Output {
+impl Mul<Tuple<Float>> for Matrix<Float, 4> {
+	type Output = Tuple<Float>;
+	fn mul(self, rhs: Tuple<Float>) -> Self::Output {
 		let mut res = Tuple::new(None);
 		for row in 0..4 {
 			let val =
-				self.get(row, 0).try_into().unwrap() * rhs.get(0) +
-					self.get(row, 1).try_into().unwrap() * rhs.get(1) +
-					self.get(row, 2).try_into().unwrap() * rhs.get(2) +
-					self.get(row, 3).try_into().unwrap() * rhs.get(3);
+				self.get(row, 0).unwrap() * rhs.get(0).unwrap() +
+				self.get(row, 1).unwrap() * rhs.get(1).unwrap() +
+				self.get(row, 2).unwrap() * rhs.get(2).unwrap() +
+				self.get(row, 3).unwrap() * rhs.get(3).unwrap();
 			res.set(row, val);
 		}
 		res
 	}
 }
 
+// 2x2
+impl<T> Matrix<T, 2>
+	where
+		T: Default + Copy + Mul<Output = T> + Sub<Output = T> + Neg<Output = T> + PartialEq {
+	pub fn determinant(&self) -> T {
+		self.get(0, 0).unwrap() * self.get(1, 1).unwrap() -
+		self.get(0, 1).unwrap() * self.get(1, 0).unwrap()
+	}
 
-macro_rules! impl_matrix_n_x_n {
-	(2) => {
-		impl<T> Matrix<T, 2>
-		where
-            T: Default + Copy + Mul<Output = T> + Sub<Output = T> + Add<Output = T> + Neg<Output = T> + PartialEq,
-		{
-			pub fn determinant(&self) -> T {
-				self.get(0, 0) * self.get(1, 1) - self.get(0, 1) * self.get(1, 0)
-			}
-
-			#[allow(dead_code)]
-			pub fn invertible(&self) -> bool {
-				self.determinant() != T::default()
-			}
-		}
-	};
-    ($size:expr) => {
-        impl<T> Matrix<T, $size>
-        where
-            T: Default + Copy + Mul<Output = T> + Div<Output=T> +
-                Sub<Output = T> + Add<Output = T> + Neg<Output = T> + PartialEq, f64: From<T>, T: std::fmt::Debug
-        {
-            pub fn sub_matrix(&self, row: usize, col: usize) -> Matrix<T, {$size - 1}> {
-                let mut sub_matrix = Matrix::new(None);
-                let mut sub_row = 0;
-                for c_row in 0..$size {
-                    if c_row == row {
-                        continue;
-                    }
-                    let mut sub_col = 0;
-                    for c_col in 0..$size {
-                        if c_col == col {
-                            continue;
-                        }
-                        sub_matrix.set(sub_row, sub_col, self.get(c_row, c_col));
-                        sub_col += 1;
-                    }
-                    sub_row += 1;
-                }
-                sub_matrix
-            }
-
-            pub fn minor(&self, row: usize, col: usize) -> T {
-                self.sub_matrix(row, col).determinant()
-            }
-
-            pub fn cofactor(&self, row: usize, col: usize) -> T {
-                if (row + col) % 2 == 0 {
-                    self.minor(row, col)
-                } else {
-                    -self.minor(row, col)
-                }
-            }
-
-            pub fn determinant(&self) -> T {
-                let mut result = T::default();
-                for col in 0..$size {
-                    result = result + self.get(0, col) * self.cofactor(0, col);
-                }
-                result
-            }
-
-            #[allow(dead_code)]
-            pub fn invertible(&self) -> bool {
-                self.determinant() != T::default()
-            }
-
-            #[allow(dead_code)]
-            pub fn inverse(&self) -> Option<Matrix<f64, $size>> {
-				if !self.invertible() {
-					return None;
-				}
-				let mut res = Matrix::new(None);
-	            for row in 0..$size {
-					for col in 0..$size {
-						let cof = f64::try_from(self.cofactor(row, col)).unwrap();
-						let det = f64::try_from(self.determinant()).unwrap();
-						// dbg!(row, col, cof, det, cof / det);
-						res.set(col, row, cof / det);
-					}
-				}
-	            Some(res)
-			}
-        }
-    };
+	#[allow(dead_code)]
+	pub fn invertible(&self) -> bool {
+		self.determinant() != T::default()
+	}
 }
 
-impl_matrix_n_x_n!(2);
-impl_matrix_n_x_n!(3);
-impl_matrix_n_x_n!(4);
+
+// 3x3
+impl Matrix<Float, 3> {
+    pub fn sub_matrix(&self, row: usize, col: usize) -> Matrix<Float, 2> {
+        let mut sub_matrix = Matrix::new(None);
+        let mut sub_row = 0;
+        for c_row in 0..3 {
+            if c_row == row {
+                continue;
+            }
+            let mut sub_col = 0;
+            for c_col in 0..3 {
+                if c_col == col {
+                    continue;
+                }
+                sub_matrix.set(sub_row, sub_col, self.get(c_row, c_col).unwrap());
+                sub_col += 1;
+            }
+            sub_row += 1;
+        }
+        sub_matrix
+    }
+
+    pub fn minor(&self, row: usize, col: usize) -> Float {
+        self.sub_matrix(row, col).determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, col: usize) -> Float {
+        if (row + col) % 2 == 0 {
+            self.minor(row, col)
+        } else {
+            -self.minor(row, col)
+        }
+    }
+
+    pub fn determinant(&self) -> Float {
+        let mut result = Float::default();
+        for col in 0..3 {
+            result = result + self.get(0, col).unwrap() * self.cofactor(0, col);
+        }
+        result
+    }
+
+    #[allow(dead_code)]
+    pub fn invertible(&self) -> bool {
+        self.determinant() != Float::default()
+    }
+
+    #[allow(dead_code)]
+    pub fn inverse(&self) -> Option<Matrix<Float, 3>> {
+		if !self.invertible() {
+			return None;
+		}
+		let mut res = Matrix::new(None);
+        for row in 0..3 {
+			for col in 0..3 {
+				let cof = Float::try_from(self.cofactor(row, col)).unwrap();
+				let det = Float::try_from(self.determinant()).unwrap();
+				res.set(col, row, cof / det);
+			}
+		}
+        Some(res)
+	}
+}
+
+
+// 4x4
+impl Matrix<Float, 4> {
+    pub fn sub_matrix(&self, row: usize, col: usize) -> Matrix<Float, 3> {
+        let mut sub_matrix = Matrix::new(None);
+        let mut sub_row = 0;
+        for c_row in 0..4 {
+            if c_row == row {
+                continue;
+            }
+            let mut sub_col = 0;
+            for c_col in 0..4 {
+                if c_col == col {
+                    continue;
+                }
+                sub_matrix.set(sub_row, sub_col, self.get(c_row, c_col).unwrap());
+                sub_col += 1;
+            }
+            sub_row += 1;
+        }
+        sub_matrix
+    }
+
+    pub fn minor(&self, row: usize, col: usize) -> Float {
+        self.sub_matrix(row, col).determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, col: usize) -> Float {
+        if (row + col) % 2 == 0 {
+            self.minor(row, col)
+        } else {
+            -self.minor(row, col)
+        }
+    }
+
+    pub fn determinant(&self) -> Float {
+        let mut result = Float::default();
+        for col in 0..4 {
+            result = result + self.get(0, col).unwrap() * self.cofactor(0, col);
+        }
+        result
+    }
+
+    #[allow(dead_code)]
+    pub fn invertible(&self) -> bool {
+        self.determinant() != Float::default()
+    }
+
+    #[allow(dead_code)]
+    pub fn inverse(&self) -> Option<Matrix<Float, 4>> {
+		if !self.invertible() {
+			return None;
+		}
+		let mut res = Matrix::new(None);
+        for row in 0..4 {
+			for col in 0..4 {
+				let cof = Float::try_from(self.cofactor(row, col)).unwrap();
+				let det = Float::try_from(self.determinant()).unwrap();
+				res.set(col, row, cof / det);
+			}
+		}
+        Some(res)
+	}
+}
 
 
 impl<T, const N: usize> PartialEq for Matrix<T, N>
-	where T: Default + Copy, f64: From<T>
+	where T: Default + Copy, Float: From<T>
 {
 	fn eq(&self, other: &Self) -> bool {
 		for i in 0..N {
 			for j in 0..N {
 				if (
-					f64::try_from(other.get(i, j)).unwrap() -
-						f64::try_from(self.get(i, j)).unwrap()
-				).abs() > EPSILON as f64 {
+					Float::try_from(other.get(i, j).unwrap()).unwrap() -
+						Float::try_from(self.get(i, j).unwrap()).unwrap()
+				).abs() > EPSILON as Float {
 					return false;
 				}
 			}
@@ -218,18 +263,24 @@ impl<T: Default + Copy, const N: usize> Matrix<T, N> {
 	pub fn transpose(&mut self) {
 		for i in 0..N {
 			for j in (i + 1)..N {
-				let t = self.get(i, j);
-				self.set(i, j, self.get(j, i));
+				let t = self.get(i, j).unwrap();
+				self.set(i, j, self.get(j, i).unwrap());
 				self.set(j, i, t)
 			}
 		}
 	}
 
 	pub fn set(&mut self, row: usize, col: usize, value: T) {
-		self.data[row][col] = value;
+		if row > 3{
+			panic!("Tuple row out of bounds!")
+		}
+		if col > 3{
+			panic!("Tuple col out of bounds!")
+		}
+		self.data[row][col] = value
 	}
-	pub fn get(&self, row: usize, col: usize) -> T {
-		self.data[row][col]
+	pub fn get(&self, row: usize, col: usize) -> Option<T> {
+		Some(*self.data.get(row)?.get(col)?)
 	}
 }
 
@@ -240,13 +291,6 @@ mod tests {
 
 	#[test]
 	fn test_matrix_equality() {
-		let matrix1 = Matrix {
-			data: [
-				[1, 2, 3],
-				[4, 5, 6],
-				[7, 8, 9],
-			],
-		};
 		let matrix1f = Matrix {
 			data: [
 				[1., 2., 3678678678.555555273786767896789676796796796796795555555555555555555555555],
@@ -255,13 +299,6 @@ mod tests {
 			],
 		};
 
-		let matrix2 = Matrix {
-			data: [
-				[1, 2, 3],
-				[4, 5, 6],
-				[7, 8, 9],
-			],
-		};
 		let matrix2f = Matrix {
 			data: [
 				[1., 2., 3678678678.555555273786767896789676796796796796795555555555555555555555555],
@@ -270,13 +307,6 @@ mod tests {
 			],
 		};
 
-		let matrix3 = Matrix {
-			data: [
-				[1, 2, 3],
-				[4, 5, 6],
-				[7, 8, 10],
-			],
-		};
 		let matrix3f = Matrix {
 			data: [
 				[1., 2., 3678678678.555555273786767896789676796796796796795555555555555555555555551],
@@ -285,63 +315,61 @@ mod tests {
 			],
 		};
 
-		assert_eq!(matrix1, matrix2);
 		assert_eq!(matrix1f, matrix2f);
-		assert_ne!(matrix1, matrix3);
 		assert_ne!(matrix1f, matrix3f);
 	}
 
 	#[test]
 	fn test_multiplying_two_matrices() {
-		let fill_array_a: [[i64; 4]; 4] = [
-			[1, 2, 3, 4],
-			[5, 6, 7, 8],
-			[9, 8, 7, 6],
-			[5, 4, 3, 2]
+		let fill_array_a: [[f32; 4]; 4] = [
+			[1., 2., 3., 4.],
+			[5., 6., 7., 8.],
+			[9., 8., 7., 6.],
+			[5., 4., 3., 2.]
 		];
 		let matrix4x4_filled_a = Matrix::new(Some(MatrixFill::Array(fill_array_a)));
 
-		let fill_array_b: [[i64; 4]; 4] = [
-			[-2, 1, 2, 3],
-			[3, 2, 1, -1],
-			[4, 3, 6, 5],
-			[1, 2, 7, 8]
+		let fill_array_b: [[f32; 4]; 4] = [
+			[-2., 1., 2., 3.],
+			[3., 2., 1., -1.],
+			[4., 3., 6., 5.],
+			[1., 2., 7., 8.]
 		];
 		let matrix4x4_filled_b = Matrix::new(Some(MatrixFill::Array(fill_array_b)));
 
-		let fill_array_c: [[i64; 4]; 4] = [
-			[20, 22, 50, 48],
-			[44, 54, 114, 108],
-			[40, 58, 110, 102],
-			[16, 26, 46, 42]
+		let fill_array_c: [[f32; 4]; 4] = [
+			[20., 22., 50., 48.],
+			[44., 54., 114., 108.],
+			[40., 58., 110., 102.],
+			[16., 26., 46., 42.]
 		];
 		assert_eq!((matrix4x4_filled_a * &matrix4x4_filled_b).data, fill_array_c)
 	}
 
 	#[test]
 	fn test_multiplying_a_matrix_with_a_tuple() {
-		let fill_array_a: [[i64; 4]; 4] = [
-			[1, 2, 3, 4],
-			[2, 4, 4, 2],
-			[8, 6, 4, 1],
-			[0, 0, 0, 1]
+		let fill_array_a: [[f32; 4]; 4] = [
+			[1., 2., 3., 4.],
+			[2., 4., 4., 2.],
+			[8., 6., 4., 1.],
+			[0., 0., 0., 1.]
 		];
 		let matrix4x4_filled_a = Matrix::new(Some(MatrixFill::Array(fill_array_a)));
 
-		let fill_array_b: [i64; 4] = [1, 2, 3, 1];
+		let fill_array_b: [f32; 4] = [1., 2., 3., 1.];
 		let tuple4x1_filled_b = Tuple::new(Some(TupleFill::Array(fill_array_b)));
 
-		let fill_array_c: [i64; 4] = [18, 24, 33, 1];
+		let fill_array_c: [f32; 4] = [18., 24., 33., 1.];
 		assert_eq!((matrix4x4_filled_a * tuple4x1_filled_b).data, fill_array_c)
 	}
 
 	#[test]
 	fn test_multiplying_by_identity_matrix() {
-		let fill_array_a: [[i64; 4]; 4] = [
-			[1, 2, 3, 4],
-			[2, 4, 4, 2],
-			[8, 6, 4, 1],
-			[0, 0, 0, 1]
+		let fill_array_a: [[f32; 4]; 4] = [
+			[1., 2., 3., 4.],
+			[2., 4., 4., 2.],
+			[8., 6., 4., 1.],
+			[0., 0., 0., 1.]
 		];
 		let fill_array_c: [[f32; 4]; 4] = [
 			[1., 2., 3., 4.],
@@ -354,7 +382,7 @@ mod tests {
 		assert_eq!((matrix4x4_filled_a * &IDENTITY_MATRIX).data, fill_array_a);
 		assert_eq!((matrix4x4_filled_c * &IDENTITY_MATRIX).data, fill_array_c);
 
-		let fill_array_b: [i64; 4] = [1, 2, 3, 1];
+		let fill_array_b: [f32; 4] = [1., 2., 3., 1.];
 		let tuple4x1_filled_b = Tuple::new(Some(TupleFill::Array(fill_array_b)));
 
 		assert_eq!((IDENTITY_MATRIX * tuple4x1_filled_b).data, fill_array_b)
@@ -504,38 +532,38 @@ mod tests {
 	#[test]
 	fn test_minor_matrix_3x3() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[3, 5, 0],
-			[2, -1, -7],
-			[6, -1, 5],
+			[3., 5., 0.],
+			[2., -1., -7.],
+			[6., -1., 5.],
 		])));
 
 		let sub_matrix = matrix.sub_matrix(1, 0);
 
-		assert_eq!(sub_matrix.determinant(), 25);
-		assert_eq!(matrix.minor(1, 0), 25)
+		assert_eq!(sub_matrix.determinant(), 25.);
+		assert_eq!(matrix.minor(1, 0), 25.)
 	}
 
 	#[test]
 	fn test_cofactor_matrix_3x3() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[3, 5, 0],
-			[2, -1, -7],
-			[6, -1, 5],
+			[3., 5., 0.],
+			[2., -1., -7.],
+			[6., -1., 5.],
 		])));
 
-		assert_eq!(matrix.minor(0, 0), -12);
-		assert_eq!(matrix.cofactor(0, 0), -12);
-		assert_eq!(matrix.minor(1, 0), 25);
-		assert_eq!(matrix.cofactor(1, 0), -25);
+		assert_eq!(matrix.minor(0, 0), -12.);
+		assert_eq!(matrix.cofactor(0, 0), -12.);
+		assert_eq!(matrix.minor(1, 0), 25.);
+		assert_eq!(matrix.cofactor(1, 0), -25.);
 	}
 
 	#[test]
 	fn test_invertible_matrix_4x4() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[6, 4, 4, 4],
-			[5, 5, 7, 6],
-			[4, -9, 3, -7],
-			[9, 1, 7, -6]
+			[6., 4., 4., 4.],
+			[5., 5., 7., 6.],
+			[4., -9., 3., -7.],
+			[9., 1., 7., -6.]
 		])));
 
 		assert_eq!(matrix.invertible(), true);
@@ -544,10 +572,10 @@ mod tests {
 	#[test]
 	fn test_non_invertible_matrix_4x4() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[-4, 2, -2, -3],
-			[9, 6, 2, 6],
-			[0, -5, 1, -5],
-			[0, 0, 0, 0]
+			[-4., 2., -2., -3.],
+			[9., 6., 2., 6.],
+			[0., -5., 1., -5.],
+			[0., 0., 0., 0.]
 		])));
 
 		assert_eq!(matrix.invertible(), false);
@@ -556,10 +584,10 @@ mod tests {
 	#[test]
 	fn test_inverse_matrix_4x4_a() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[-5, 2, 6, -8],
-			[1, -5, 1, 8],
-			[7, 7, -6, -7],
-			[1, -3, 7, 4]
+			[-5., 2., 6., -8.],
+			[1., -5., 1., 8.],
+			[7., 7., -6., -7.],
+			[1., -3., 7., 4.]
 		])));
 
 		let inverse = Matrix::new(Some(MatrixFill::Array([
@@ -572,26 +600,26 @@ mod tests {
 		assert_eq!(matrix.invertible(), true);
 		let b = matrix.inverse().unwrap();
 
-		assert_eq!(matrix.determinant(), 532);
+		assert_eq!(matrix.determinant(), 532.);
 		//
-		assert_eq!(matrix.cofactor(1, 1), -775);
-		assert_eq!(b.get(1, 1), -775. / 532.);
+		assert_eq!(matrix.cofactor(1, 1), -775.);
+		assert_eq!(b.get(1, 1).unwrap(), -775. / 532.);
 		//
-		assert_eq!(matrix.cofactor(2, 3), -160);
-		assert_eq!(b.get(3, 2), -160. / 532.);
+		assert_eq!(matrix.cofactor(2, 3), -160.);
+		assert_eq!(b.get(3, 2).unwrap(), -160. / 532.);
 		//
-		assert_eq!(matrix.cofactor(3, 2), 105);
-		assert_eq!(b.get(2, 3), 105. / 532.);
+		assert_eq!(matrix.cofactor(3, 2), 105.);
+		assert_eq!(b.get(2, 3).unwrap(), 105. / 532.);
 		assert_eq!(b, inverse);
 	}
 
 	#[test]
 	fn test_inverse_matrix_4x4_b() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[8, -5, 9, 2],
-			[7, 5, 6, 1],
-			[-6, 0, 9, 6],
-			[-3, 0, -9, -4]
+			[8., -5., 9., 2.],
+			[7., 5., 6., 1.],
+			[-6., 0., 9., 6.],
+			[-3., 0., -9., -4.]
 		])));
 
 		let inverse = Matrix::new(Some(MatrixFill::Array([
@@ -610,10 +638,10 @@ mod tests {
 	#[test]
 	fn test_inverse_matrix_4x4_c() {
 		let matrix = Matrix::new(Some(MatrixFill::Array([
-			[9, 3, 0, 9],
-			[-5, -2, -6, -3],
-			[-4, 9, 6, 4],
-			[-7, 6, 6, 2]
+			[9., 3., 0., 9.],
+			[-5., -2., -6., -3.],
+			[-4., 9., 6., 4.],
+			[-7., 6., 6., 2.]
 		])));
 
 		let inverse = Matrix::new(Some(MatrixFill::Array([
@@ -643,7 +671,7 @@ mod tests {
 			[7., 0., 5., 4.],
 			[6., -2., 0., 5.]
 		])));
-		let matrix_c = matrix_a * &matrix_b;
-		assert_eq!(matrix_c * matrix_b.inverse().unwrap(), matrix_a);
+		let matrix_c = matrix_a.clone() * &matrix_b;
+		assert_eq!(matrix_c * &matrix_b.inverse().unwrap(), matrix_a);
 	}
 }

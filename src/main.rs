@@ -1,6 +1,7 @@
 use crate::canvas::Canvas;
+use crate::misc::EPSILON;
 use crate::vec3::color;
-use crate::vec4::{EPSILON, point, vector};
+use crate::vec4::{point, vector};
 use self::vec4::Vec4;
 
 mod vec4;
@@ -8,6 +9,7 @@ mod vec3;
 mod canvas;
 mod matrix;
 mod tuple;
+mod misc;
 
 #[derive(Debug)]
 struct Projectile {

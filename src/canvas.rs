@@ -34,7 +34,6 @@ impl Canvas {
 		self.grid[position as usize] = color;
 	}
 
-	#[allow(dead_code)]
 	pub fn pixel_at(self, x: u64, y: u64) -> Option<Vec3> {
 		if x > self.width - 1 || y > self.height - 1 {
 			return None;

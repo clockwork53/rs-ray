@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Sub};
+use crate::misc::EPSILON;
 
-pub const EPSILON: f32 = 0.00001;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
